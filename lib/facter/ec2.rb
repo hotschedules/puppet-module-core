@@ -32,7 +32,8 @@ if Facter.value(:operatingsystem) == 'Amazon' then
 
     Facter.add(:ec2_iam_roleid) do
       setcode do
-        JSON.parse(open("http://169.254.169.254/latest/meta-data/iam/info").read)['InstanceProfileId']
+        profile = JSON.parse(open("http://169.254.169.254/latest/meta-data/iam/info").read)['InstanceProfileArn'].split('/')[-1]
+        Facter::Util::Resolution.exec("aws iam get-role --role-name #{profile} --query 'Role.RoleId' --output text 2>/dev/null")
       end
     end
 
