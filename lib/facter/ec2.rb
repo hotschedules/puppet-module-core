@@ -1,5 +1,6 @@
 require 'facter/util/ec2'
 require 'open-uri'
+require 'json'
 
 if Facter.value(:operatingsystem) == 'Amazon' then
     def metadata(id = "")
@@ -30,28 +31,8 @@ if Facter.value(:operatingsystem) == 'Amazon' then
     end
 
     Facter.add(:ec2_iam_roleid) do
-      shortname = `hostname`.split('.')[0].split('-')
-      case shortname.length
-        when 3
-          instance_environment = shortname[0]
-          instance_role = shortname[1]
-          setcode do
-            Facter::Util::Resolution.exec("aws iam get-role --role-name #{instance_environment}-#{instance_role} --query 'Role.RoleId' 2>/dev/null").gsub("\"","")
-          end
-        when 4
-          instance_product = shortname[0]
-          instance_environment = shortname[1]
-          instance_role = shortname[2]
-          setcode do
-            Facter::Util::Resolution.exec("aws iam get-role --role-name #{instance_product}-#{instance_environment}-#{instance_role} --query 'Role.RoleId' 2>/dev/null").gsub("\"","")
-          end
-        when 5
-          instance_product = shortname[0]
-          instance_environment = shortname[1]
-          instance_role = shortname[2]
-          setcode do
-            Facter::Util::Resolution.exec("aws iam get-role --role-name #{instance_product}-#{instance_environment}-#{instance_role} --query 'Role.RoleId' 2>/dev/null").gsub("\"","")
-          end
+      setcode do
+        JSON.parse(open("http://169.254.169.254/latest/meta-data/iam/info").read)['InstanceProfileId']
       end
     end
 
